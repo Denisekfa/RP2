@@ -9,20 +9,20 @@ turtles-own
 globals
 [   %infected            ;; porcentagem de pessoas que estão infectados
     %immune              ;; porcentagem de pessoas imunes
-    ;;%vacinado?
     lifespan             ;; expectativa de vida da turtle
     chance-reproduce     ;; the probability of a turtle generating an offspring each tick
     carrying-capacity    ;; quantidade máxima de turtles presentes no ambiente
-    d
-    v
+    porcentagem_inicial_doentes
+    porcentagem_inicial_vacinados
+    nro_morto
 ]
 
-
-;; O setup está dividido em The setup is divided into four procedures
+;;Populations
+;; O setup está dividido em 4 procedimentos
 to setup
   clear-all
   setup-constants          ;; define as constantes
-  setup-turtles            ;;define as turtles no ambiente
+  setup-turtles            ;; define as turtles no ambiente
   update-global-variables
   update-display
   reset-ticks
@@ -38,11 +38,11 @@ to setup-turtles
       ;;set remaining-immunity 0
       set size 1.5  ;; easier to see
       get-healthy ]
-  set d number-people * doentes * 0.01
-  set v number-people * vacinados * 0.01
-  ask n-of d turtles ;;number-people*doentes*0,01
+  set porcentagem_inicial_doentes number-people * doentes * 0.01
+  set porcentagem_inicial_vacinados number-people * vacinados * 0.01
+  ask n-of porcentagem_inicial_doentes turtles ;;number-people*doentes*0,01
     [ get-sick ]
-  ask n-of v turtles
+  ask n-of porcentagem_inicial_vacinados turtles
     [set vacinado? true]
 end
 
@@ -51,7 +51,6 @@ to get-sick ;; turtle procedure
   set contagioso? false
   set imune? false
   set vacinado? false
-  ;;set remaining-immunity 0
 end
 
 to get-healthy ;; turtle procedure
@@ -59,7 +58,6 @@ to get-healthy ;; turtle procedure
   set contagioso? false
   set imune? false
   set vacinado? false
-  ;;set remaining-immunity 0
   set sick-time 0
 end
 
@@ -74,7 +72,7 @@ end
 
 ;; This sets up basic constants of the model.
 to setup-constants
-  set lifespan expectativa-de-vida * 52 * 7     ;; 50 times 52 weeks = 50 years = 2600 weeks old
+  set lifespan expectativa-de-vida * 52 * 7     ;; expectativa vezes 52 weeks = x anos = 2600 weeks old
   set carrying-capacity 300
   set chance-reproduce 1
   ;;set immunity-duration 52
@@ -106,21 +104,18 @@ end
 
 ;;Turtle counting variables are advanced.
 to get-older ;; turtle procedure
-  ;; Turtles die of old age once their age exceeds the
-  ;; lifespan (set at 50 years in this model).
   set age age + 1
-  if age > lifespan [ die ]
-  ;;if immune? [ set remaining-immunity remaining-immunity - 1 ]
-  if sick? [ set sick-time sick-time + 1
-    set contagioso? false
-    if sick-time >= 8 [
-      if sick-time <= 12 [ set contagioso? true];;4 dias antes da manifestacao
-      if sick-time > 18 [ if sick-time <= 22 [ set contagioso? true] ];; 4 dias depois
+  if age > lifespan [ die ]                         ;; se tem superou a expectativa de vida, morre
+  if sick? [
+    set sick-time sick-time + 1                     ;; aumenta tempo doente
+    set contagioso? false                           ;; ajusta variável contagioso
+    if sick-time >= 8 and sick-time <= 16[          ;; a pessoa é contagiosa entre o 8 dia e o 16 dia
+      set contagioso? true
     ]
   ]
 end
 
-;; Turtles move about at random.
+;; Turtles move about at random.her turtles-here with
 to move ;; turtle procedure
   rt random 100
   lt random 100
@@ -130,7 +125,7 @@ end
 ;; If a turtle is sick, it infects other turtles on the same patch.
 ;; Immune turtles don't get sick.
 to infect ;; turtle procedure
-  ask other turtles-here with [ not contagioso? and not immune? ]
+  ask other turtles-here with [not contagioso? and not immune?] ;;se não está contagioso e não imune
     [ if random-float 100 < 90
       [ get-sick ] ]
 end
@@ -138,11 +133,14 @@ end
 ;; Once the turtle has been sick long enough, it
 ;; either recovers (and becomes immune) or it dies.
 to recover-or-die ;; turtle procedure
-  if sick-time > 18                       ;; If the turtle has survived past the virus' duration, then
+  if sick-time > 19                       ;; If the turtle has survived past the virus' duration, then
     [if age < 15
-      [ifelse random-float 200 < chance-de-recuperar [become-immune ] [ die ] ]
+      [ifelse random-float 200 < chance-de-recuperar [become-immune ] [
+        die
+        nro_morto = nro_morto + 1
+      ] ] ;; se ela tiver menos de 15 anos, a chance dela morrer dobra
     if age >= 15[
-        ifelse random-float 100 < chance-de-recuperar   ;; either recover or die
+        ifelse random-float 100 < chance-de-recuperar   ;; recupere ou morra
       [ become-immune ]
       [ die ] ]
     ]
@@ -208,7 +206,7 @@ doentes
 doentes
 0.0
 99.0
-11.0
+49.0
 1.0
 1
 %
@@ -223,7 +221,7 @@ chance-de-recuperar
 chance-de-recuperar
 0.0
 99.0
-50.0
+91.0
 1.0
 1
 %
@@ -238,7 +236,7 @@ vacinados
 vacinados
 0.0
 99.0
-27.0
+0.0
 1.0
 1
 %
@@ -279,17 +277,17 @@ NIL
 0
 
 PLOT
-15
-375
-267
-539
+782
+10
+1273
+339
 Populations
-dias
-pessoas
+Dias
+Pessoas
 0.0
 52.0
 0.0
-200.0
+300.0
 true
 true
 "" ""
@@ -298,6 +296,7 @@ PENS
 "Imunes" 1.0 0 -7500403 true "" "plot count turtles with [ immune? or vacinado? ]"
 "Saudáveis" 1.0 0 -10899396 true "" "plot count turtles with [ not sick?]"
 "Total" 1.0 0 -13345367 true "" "plot count turtles"
+"Mortos pela doença" 1.0 0 -16777216 true "" ""
 
 SLIDER
 40
@@ -366,11 +365,22 @@ expectativa-de-vida
 expectativa-de-vida
 0
 100
-50.0
+38.0
 1
 1
 NIL
 HORIZONTAL
+
+MONITOR
+77
+430
+233
+475
+mortos pela doença
+nro_mortos
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -780,7 +790,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.0
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
