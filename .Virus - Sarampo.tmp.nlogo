@@ -138,7 +138,7 @@ to recover-or-die ;; turtle procedure
   if sick-time > 19                       ;; If the turtle has survived past the virus' duration, then
     [if age < 15
       [ifelse random-float 200 < chance-de-recuperar [become-immune ] [
-        set nro_morto nro_morto + 1
+
         die
       ] ] ;; se ela tiver menos de 15 anos, a chance dela morrer dobra
     if age >= 15[
