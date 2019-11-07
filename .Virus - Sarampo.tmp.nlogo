@@ -136,12 +136,12 @@ end
 ;; either recovers (and becomes immune) or it dies.
 to recover-or-die ;; turtle procedure
   if sick-time > 19                       ;; If the turtle has survived past the virus' duration, then
-    [if age < 15
-      [ifelse random-float 200 < chance-de-recuperar [become-immune ] [
-
+    [if age < 5                           ;; se ela tiver menos de 15 anos, a chance dela morrer dobra
+      [ifelse random-float 100 < 100 - (chance-de-recuperar) [become-immune ] [
+        set nro_morto nro_morto + 1
         die
-      ] ] ;; se ela tiver menos de 15 anos, a chance dela morrer dobra
-    if age >= 15[
+      ] ]
+    if age >= 1[
         ifelse random-float 100 < chance-de-recuperar   ;; recupere ou morra
       [ become-immune ]
       [ die ] ]
@@ -289,7 +289,7 @@ Pessoas
 0.0
 52.0
 0.0
-300.0
+1000.0
 true
 true
 "" ""
@@ -298,7 +298,6 @@ PENS
 "Imunes" 1.0 0 -7500403 true "" "plot count turtles with [ immune? or vacinado? ]"
 "Saudáveis" 1.0 0 -10899396 true "" "plot count turtles with [ not sick?]"
 "Total" 1.0 0 -13345367 true "" "plot count turtles"
-"Mortos pela doença" 1.0 0 -16777216 true "" ""
 
 SLIDER
 40
